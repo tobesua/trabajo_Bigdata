@@ -1,0 +1,116 @@
+/* css styles */
+
+/* de: https://github.com/schochastics/quarto-schochastics/blob/main/styles.css */ 
+
+.quarto-grid-item img.thumbnail-image {
+    object-fit: contain;
+}
+
+.thumbnail-image:hover{
+  opacity:75%;
+}
+
+.center{
+   text-align: center;
+}
+
+div.column.col-v-center{
+   vertical-align: middle;
+}
+
+.home-title{
+  font-size: 2em;
+}
+
+.socials{
+  padding-top: 0.5em;
+  padding-bottom: 1em;
+}
+
+.socials a{
+  color: #9EEBCF;
+  margin-left: 0.5em;
+}
+
+/* Para poner una imagen en el title-block-banner*/ 
+/* de: https://stackoverflow.com/questions/74180779/r-quarto-html-document-how-to-insert-logo-image-at-the-left-of-the-title-su */ 
+/* Ajustar el bloque del título */
+.quarto-title-block {
+  text-align: center; /* Centra todo el bloque */
+  margin-bottom: 20px; /* Agrega espacio después del bloque */
+}
+
+.quarto-title-block .authors, 
+.quarto-title-block .date {
+  text-align: left; /* Alinea autores y fecha a la izquierda */
+  margin-top: 10px; /* Espacio entre elementos */
+}
+
+/* Estilo para los autores */
+.quarto-title-block .authors {
+  font-weight: bold; /* Destaca los autores */
+  font-size: 14px; /* Tamaño adecuado para texto */
+}
+
+/* Estilo para el resumen */
+.quarto-title-block .abstract {
+  text-align: justify; /* Justifica el texto */
+  font-size: 16px; /* Ajusta el tamaño del texto */
+  margin-top: 20px; /* Agrega espacio antes del resumen */
+}
+
+/* Estilo para la fecha */
+.quarto-title-block .date {
+  font-size: 14px;
+  color: #666; /* Color tenue para menor énfasis */
+}
+
+/*
+.quarto-title-block .quarto-title-banner {
+  background-image: url(imagenes/uv.jpeg);
+  background-size: 250px;
+  background-position: left;
+  background-repeat: no-repeat;
+  padding-left: 10px;
+  background-origin: content-box;
+}
+/*
+
+/* NO TOCAR lo de arriba*/ 
+
+/* definiendo estilos de los párrafos */ 
+/* justificar el texto del body y listas */
+p, ul, ol {
+  text-align: justify; 
+} 
+
+/* Estilos del menú desplegable */
+.dropdown-menu {
+  background-color: #f3f3ea;
+  border: 1px solid #d6d6d6;
+  border-radius: 4px;
+}
+
+.dropdown-menu .dropdown-item {
+  color: #333333;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.rojo {
+  color: red;
+}
+
+.yellow-background {
+  background-color: yellow;
+}
+
+.importante {
+  color: red;
+  background-color: yellow;
+}

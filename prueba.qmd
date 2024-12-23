@@ -1,0 +1,33 @@
+---
+title: "ACCESO A LA VIVIENDA Y TURISTIFICACIÓN"
+subtitle: "Consecuencias del turismo masivo en el acceso a la vivienda"
+author: 
+  - name: Lamyaâ    
+  - name: Andrea Segovia
+    email: ansegon3@alumni.uv.es
+  - name: Tomás Berríos
+    email: tobesua@alumni.uv.es
+affiliation: Universitat de València
+affiliation-url: https://www.uv.es
+date: 2024-12-30
+categories: [trabajo BigData, vivienda]
+abstract: |
+  El presente trabajo analiza el impacto de la turistificación en el acceso a la vivienda en España. Se estudian cambios en precios, disponibilidad de alquileres y dinámicas socioeconómicas en ciudades afectadas por el turismo masivo.
+format:
+  html:
+    theme: lux
+    highlight-style: a11y-dark
+    page-layout: full
+    toc: true
+    toc-depth: 2
+    toc-title: "Contenido"
+    smooth-scroll: true
+    number-sections: true
+    css: assets/my_styles.css
+title-block-banner: "#f3f3ea"
+title-block-style: default
+title-block-banner-color: "#ffffff"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = 'center')

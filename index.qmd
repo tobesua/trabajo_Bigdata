@@ -1,0 +1,501 @@
+---
+# title: "Los pingüinos molan"
+#- si quieres poner una imagén al lado del título
+title: "ACCESO A LA VIVIENDA Y TURISTIFICACIÓN"
+description: |
+  Consecuencias del turismo masivo en el acceso a la vivienda
+abstract: "El presente trabajo, titulado Acceso a la Vivienda y Turistificación, tiene como objetivo analizar el impacto de la turistificación en el acceso a la vivienda en España. En las últimas décadas, el fenómeno de la turistificación ha experimentado un crecimiento notable, especialmente en ciudades con alta afluencia turística, lo que ha generado una serie de cambios en el mercado inmobiliario. Este estudio se enfoca en evaluar cómo la turistificación influye en los precios de la vivienda, la disponibilidad de alquileres y las dinámicas socioeconómicas de las ciudades más afectadas por este fenómeno. Se exploran factores como el aumento de la demanda de propiedades turísticas, la conversión de viviendas en alquileres de corta duración y sus efectos en la calidad de vida de los residentes permanentes. A través de un análisis de datos recientes y la comparación entre ciudades con diferentes niveles de turistificación, se busca proporcionar una visión integral de los retos y oportunidades asociados con la relación entre el turismo y el acceso a la vivienda en el contexto urbano español."
+
+
+#- Autor/Autores ----------------------
+#- si solo hay un autor ------
+# author:
+#   - name: Muddy Waters
+#     affiliation: Universitat de València
+#     affiliation-url: https://www.uv.es
+#- si hubiesen varios autores ------
+author: 
+- name: Lamyaâ Abdaym (lamyaa@alumni.uv.es)
+- name: Andrea Segovia (ansegon3@alumni.uv.es)
+- name: Tomás Berríos (tobesua@alumni.uv.es)
+affiliation: Universitat de València
+affiliation-url: https://www.uv.es
+
+#- fecha de procesado del documento
+#date: "`r format(Sys.time(), '%d %B, %Y')`"
+#date: today
+#date-format: short
+date: 2024-12-30
+
+#- categorías, palabras clave
+categories: [trabajo BigData, vivienda]  
+
+format:
+  html:
+    #- https://quarto.org/docs/output-formats/html-themes.html
+    theme: minty 
+    #- code highlight: https://quarto.org/docs/output-formats/html-code.html#highlighting        
+    highlight-style: a11y   
+    page-layout: full  
+    fontcolor: black              #- color del texto
+    #backgroundcolor: "#F1F3F4"   #- color de fondo de la página
+ 
+#- Quarto incluye un title-block al principio de los artículos con elementos como: title, subtitle, authors, date, doi, and abstract.
+# title-block-banner: pone un banner en el title-block: pondrá el title, subtitle, description, y categories dentro del banner
+# https://quarto.org/docs/authoring/title-blocks.html#title-banners
+title-block-banner: f3f3ea #- {true, false, "#FFDDFF",  "image.jpg"}
+# title-block-style: modifica el estilo del title-block
+# https://quarto.org/docs/authoring/title-blocks.html
+title-block-style: default #- {default, plain, none}
+# tb se puede especificar el color del texto dentro del banner
+title-block-banner-color: f3f3ea
+
+css: assets/my_styles.css           #- si queréis tunear con CSS
+---
+## Introducción
+
+En este trabajo, abordaremos el análisis de varios aspectos clave relacionados con el acceso a la vivienda en España, utilizando datos provenientes del INE. 
+En primer lugar, realizaremos un estudio sobre la evolución de los salarios en el país, con el objetivo de comparar el poder adquisitivo a lo largo del tiempo y evaluar cómo ha cambiado en los últimos años. Después nos centraremos en el análisis de la oferta de vivienda y la evolución de los precios en las principales ciudades españolas, identificando las tendencias más relevantes en el mercado inmobiliario. Finalmente, compararemos la oferta de vivienda convencional con la oferta de viviendas turísticas, analizando cómo la turistificación afecta el acceso a la vivienda y contribuye a la transformación de las dinámicas urbanas. Este análisis nos permitirá obtener una visión integral de los desafíos actuales en el mercado de la vivienda, así como de las posibles soluciones y recomendaciones para mitigar los impactos negativos sobre los residentes permanentes.
+
+
+Los paquetes se pueden cargar en la memoria de de R/RStudio de esta forma:
+
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(devtools) #install.packages("devtools")
+library(eurostat)
+library(plotly) #install.packages("plotly")
+library(gganimate) #install.packages("gganimate")
+library(leaflet)
+library(readxl)
+library(gifski)
+library(magick)
+library(tmap) #install.packages("tmap")
+library(sf) #install.packages("sf")
+library(rnaturalearth)
+  
+
+```
+
+
+
+# **Importación y preparación de datos salariales**
+
+El objetivo de este apartado es analizar la evolución de los salarios en España en los últimos años para, posteriormente, evaluar cómo influyen en el acceso a la vivienda.
+
+Para ello, hemos seleccionado datos del INE que recogen tanto los salarios medios desde 2008 hasta 2022 como los salarios más frecuentes (la moda). Esto nos permite evidenciar que la media salarial no es una medida representativa para abordar el acceso a la vivienda, ya que está condicionada por los extremos salariales más altos y más bajos.
+
+Por este motivo, hemos comparado la media con el salario más común en estos años, lo que ofrece una visión más realista de la situación económica de la mayoría de los ciudadanos y ciudadanas.
+  
+## Importar base de datos de salarios
+```{r importar_salarios}
+  # Definimos la ruta para importar los datos de salarios
+  data_ruta <- here::here("assets", "salario_esp.xlsx")
+  datos_salarios <- rio::import(data_ruta)
+  
+  # Confirmar que los datos se han importado correctamente
+  head(datos_salarios)  # Ver las primeras filas
+```
+  
+## Transformar los datos a formato largo
+```{r transformar_largos}
+  # Transformar los datos de salarios a formato largo
+  # Esto facilita la creación de gráficos comparativos
+  datos_largos <- datos_salarios %>%
+    pivot_longer(
+      cols = c("salario_medio", "salario_mediana"), 
+      names_to = "tipo_salario", 
+      values_to = "valor"
+    )
+  
+  # Eliminar el dataframe original para liberar memoria
+  rm(datos_salarios)
+```
+  
+## Gráfico de barras - Evolución de salarios
+```{r grafico_salarios}
+  # Crear un gráfico de barras interactivo
+  plot_ly(datos_largos, 
+          x = ~años, 
+          y = ~valor, 
+          color = ~tipo_salario, 
+          type = 'bar', 
+          text = ~paste(tipo_salario, ": ", valor, "€"),
+          hoverinfo = 'text') %>%
+    layout(
+      title = "Evolución de los Salarios en España (2008-2024)",
+      xaxis = list(title = "Año", tickangle = 45),
+      yaxis = list(title = "Salario (€)"),
+      barmode = "group"
+    )
+```
+  
+# **Importación y preparación de datos de salario mensual**
+  
+## Importar base de datos
+```{r importar_mensual}
+# Importar los datos del salario mensual
+mensual_ruta <- here::here("assets", "salario_mensual.xlsx")
+datos_salarios_mensual <- rio::import(mensual_ruta)
+  
+# Verificar la correcta importación
+head(datos_salarios_mensual)
+```
+  
+## Transformación y gráfico
+```{r grafico_mensual}
+  # Transformar los datos al formato largo
+  datos_largos_mensual <- datos_salarios_mensual %>%
+    pivot_longer(
+      cols = c("medio_mensual", "mediana_mensual"), 
+      names_to = "tipo_salario", 
+      values_to = "valor"
+    )
+  
+  # Eliminar el dataframe original
+  rm(datos_salarios_mensual)
+  
+  # Crear gráfico de barras para salarios mensuales
+  plot_ly(datos_largos_mensual, 
+          x = ~años, 
+          y = ~valor, 
+          color = ~tipo_salario, 
+          type = 'bar', 
+          text = ~paste(tipo_salario, ": ", valor, "€")) %>%
+    layout(
+      title = "Evolución del Salario Mensual en España (2008-2024)",
+      xaxis = list(title = "Año", tickangle = 45),
+      yaxis = list(title = "Salario (€)"),
+      barmode = "group"
+    )
+```
+
+El primer gráfico muestra la evolución de esta comparación en términos anuales, mientras que el segundo lo hace en términos mensuales. Como podemos observar, el salario más común siempre es inferior a la media salarial, lo que evidencia que la media no refleja la realidad de la mayoría de los trabajadores. Esta diferencia resalta la desconexión entre los salarios más altos y más bajos, y cómo estos extremos afectan la percepción del poder adquisitivo y el acceso a la vivienda.
+
+  
+# **Análisis de IPV - Preparación de datos panel**
+  
+## Importar base de datos IPV
+```{r importar_ipv}
+  # Importar base de datos IPV
+  ipv <- read_excel("./assets/ipv.xlsx", sheet = "usar")
+  
+  # Reorganizar la base de datos para formato panel
+  datos_panel_ipv <- ipv %>%
+    pivot_longer(cols = -year, names_to = "region", values_to = "valor") %>%
+    arrange(year, region) %>%
+    mutate(year = as.numeric(year))
+```
+  
+## Boxplot por región
+```{r boxplot_region}
+  # Crear boxplot para comparar valores por región
+  library(ggplot2)
+  
+  ggplot(datos_panel_ipv, aes(x = region, y = valor, fill = region)) +
+    geom_boxplot() +
+    labs(title = "Distribución de valores por región", x = "Región", y = "Valor") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+El boxplot muestra la distribución de valores por región, permitiendo comparar la variabilidad y los niveles centrales de los datos entre las diferentes comunidades autónomas. Las cajas representan el rango intercuartil (IQR), donde la línea negra central indica la mediana de los valores, mientras que los bigotes y puntos extremos reflejan la dispersión y la presencia de posibles valores atípicos.
+
+Se observa que regiones como Madrid y Cataluña presentan una mayor dispersión en los datos, evidenciada por bigotes más largos y rangos intercuartiles más amplios, lo que indica una alta variabilidad en estas zonas. Asimismo, estas regiones, junto con País Vasco, destacan con valores medianos y máximos más altos, reflejando un mercado inmobiliario con precios más elevados. Por otro lado, comunidades como Extremadura, Melilla y Ceuta muestran valores más bajos, con medianas cercanas a 100 y rangos intercuartiles más estrechos, lo que sugiere una menor variabilidad y niveles de precios más estables.
+
+Regiones como Castilla-La Mancha, Canarias y Galicia presentan distribuciones más uniformes, con rangos intercuartiles más reducidos, lo que indica menor dispersión en los valores de estas zonas. La categoría Nacional, que actúa como un promedio global, muestra una distribución intermedia, sirviendo como referencia para comparar la posición de las demás regiones en el conjunto de datos.
+
+En conclusión, el gráfico refleja diferencias significativas en la distribución de valores entre regiones, con Madrid y Cataluña liderando en valores más altos y dispersos, mientras que Extremadura y Melilla se ubican en el extremo opuesto con valores más bajos y menor variabilidad. La categoría Nacional proporciona una visión global para entender el comportamiento agregado del mercado.
+
+# **Análisis y gráficos animados**
+  
+## Evolución de precios
+```{r grafico_animado_ipv}
+# Seleccionar regiones y calcular el promedio general
+regiones_elegidas <- c("Comunitat Valenciana", "Madrid", "Cataluña")
+datos_filtrados <- datos_panel_ipv %>%
+  filter(region %in% regiones_elegidas)
+
+#limpiamos la base 
+datos_filtrados %>%
+  filter(is.na(year) | is.na(valor)) %>%
+  print()
+#> # A tibble: 0 × 3
+#> # ℹ 3 variables: year <dbl>, region <chr>, valor <dbl>
+
+# Crear el gráfico animado
+grafico_animado <- ggplot(datos_filtrados, aes(x = year, y = valor, color = region, group = region)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Cataluña" = "blue", "Comunitat Valenciana" = "green", 
+                                "Madrid" = "red")) +
+  labs(
+    title = "Evolución de Precios de Viviendas",
+    x = "Año", y = "Precio", color = "Región"
+  ) +
+  theme_minimal() +
+  transition_reveal(year)
+grafico_animado
+```
+El gráfico muestra la evolución de los precios de viviendas en Cataluña, Madrid y la Comunitat Valenciana entre 2007 y 2023, reflejando tres fases clave: una caída drástica entre 2007 y 2013, atribuida a la crisis financiera global de 2008, donde los precios tocaron fondo en 2013, especialmente en Cataluña y Madrid. A partir de 2014-2015, se observa una recuperación sostenida, impulsada por la reactivación económica y el aumento de la demanda, especialmente en regiones metropolitanas como Madrid y Cataluña, que muestran un crecimiento más acelerado, alcanzando niveles cercanos a 150 en 2023. En contraste, la Comunitat Valenciana presenta una recuperación más moderada y pausada, lo que sugiere menor presión del mercado inmobiliario. Estas diferencias regionales destacan el papel de Madrid como el mercado más dinámico, seguido de Cataluña, evidenciando la importancia de las grandes ciudades en el proceso de recuperación del sector inmobiliario español.
+
+# **Análisis adicional con Heatmap**
+```{r heatmap_ipv}
+  # Crear un heatmap
+  p <- ggplot(datos_filtrados, aes(x = region, y = year, fill = valor)) +
+    geom_tile(color = "white") +
+    scale_fill_viridis_c(name = "Valor", option = "plasma") +
+    labs(title = "Heatmap Valores por Región y Año", x = "Región", y = "Año") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # Mostrar heatmap
+  p
+```
+Este heatmap presenta la distribución de los valores de precios de viviendas en las regiones de Cataluña, Comunitat Valenciana y Madrid a lo largo de los años 2010, 2015 y 2020. Los colores representan la magnitud de los valores, donde tonos más claros (amarillo) indican valores más altos, y tonos oscuros (azul oscuro) reflejan valores más bajos.
+
+En 2010, se observan altos valores en Cataluña y Madrid (colores amarillos), mientras que la Comunitat Valenciana presenta valores más moderados (naranja).
+Para 2015, el gráfico muestra un descenso generalizado de los valores en todas las regiones, con predominio de tonos oscuros (azul), indicando que fue el período más bajo en términos de precios, probablemente debido a la crisis financiera de 2008-2013.
+En 2020, los valores muestran una recuperación gradual, especialmente en Madrid y Cataluña, donde los colores vuelven a tonalidades más claras (rosado y naranja), mientras que la Comunitat Valenciana mantiene valores relativamente moderados.
+En conclusión, el heatmap refleja el impacto de la crisis económica con una caída marcada de los valores en 2015, seguida de una recuperación desigual en 2020, donde Madrid y Cataluña lideran la recuperación, mientras que la Comunitat Valenciana presenta un crecimiento más moderado.  
+---
+
+# **Aumento del número de viviendas turísticas por CCAA**
+
+```{r}
+library(tidyverse)
+library(sf) 
+# definimos la ruta para poder importar los datos
+ruta <- here::here("assets", "viv_tur_2020.xlsx")
+viv_tur_2020 <- rio::import(ruta)
+
+df_viv_tur_2020 <- viv_tur_2020
+
+
+
+#- cargo geometrías de provincias
+df_geo_prov <- pjpv.curso.R.2022::LAU2_prov_2020_canarias
+plot(df_geo_prov, max.plot = 1)
+
+#- podemos ver que la última columna de df_geo_prov tiene las "geometrías"
+names(df_geo_prov)
+head(df_geo_prov)
+
+#- me quedo con las vv. q me interesan
+df_geo_prov <- df_geo_prov %>% select(ine_prov, ine_prov.n, ine_ccaa, ine_ccaa.n)
+names(df_geo_prov)
+
+#- podemos "agregar" geometrías
+df_geo_ccaa <- df_geo_prov %>%
+  group_by(ine_ccaa, ine_ccaa.n) %>% summarize() %>% ungroup()
+plot(df_geo_ccaa, max.plot = 1)
+names(df_geo_ccaa)
+
+
+#- junto geometría (df_geo_ccaa) con datos INE (df_viv_tur_2020)
+#- las geometrías a la izquierda
+df_ok <- left_join(df_geo_ccaa, df_viv_tur_2020, by = c("ine_ccaa.n" = "ccaa"))
+names(df_ok)
+
+#- basic plot
+p <- ggplot() +
+  geom_sf(data = df_ok,
+          aes(geometry = geometry, fill = viviendas_turisticas),
+          color = "white", size = 0.09)
+
+p + scale_fill_distiller(palette = 2)
+p + pjpv.curso.R.2022::theme_pjp_maps()
+p + scale_fill_viridis_c(option = "plasma") 
+
+
+#- mejoramos un poco el plot ---------------------------------------------------
+#- para ello calculo centroides
+library(sf)
+df_geo_ccaa <- cbind(df_geo_ccaa, st_coordinates(st_centroid(df_geo_ccaa$geometry)))
+names(df_geo_ccaa)
+#- vuelvo a juntar datos EPA con geometrías (que ahora incorporan los centroides)
+df_ok <- left_join(df_geo_ccaa, df_viv_tur_2020, by = c("ine_ccaa.n" = "ccaa"))
+
+p <- ggplot() +
+  geom_sf(data = df_ok) +
+  geom_text(data = df_ok, aes(x = X, y = Y, label = viviendas_turisticas), #- v. continua
+            color = "black",
+            check_overlap = TRUE, size = 3)  #- fontface = "bold"
+
+p
+
+
+p <- ggplot() +
+geom_sf(data = df_ok,
+        aes(geometry = geometry), fill = "#B0E0E6",
+        color = "black", size = 0.09) +
+  geom_text(data = df_ok, aes(x = X, y = Y, label = viviendas_turisticas), #- v. continua
+            color = "black",
+            check_overlap = TRUE, size = 3)  #- fontface = "bold"
+
+p
+
+
+#- luego ya hay que añadirle el título
+p2020 <- p + pjpv.curso.R.2022::theme_pjp_maps() +
+  labs(title = "Viviendas Turísticas 2020",
+       caption = "Datos provenientes del INE")
+
+p2020
+
+#Ahora hacemos lo mismo para el año 2024 con el fin de ver el cambio en el número de viviendas turísticas
+
+# definimos la ruta para poder importar los datos
+ruta2 <- here::here("assets", "viv_tur_2024.xlsx")
+viv_tur_2024 <- rio::import(ruta2)
+
+df_viv_tur_2024 <- viv_tur_2024
+
+
+
+#- cargo geometrías de provincias
+df_geo_prov <- pjpv.curso.R.2022::LAU2_prov_2020_canarias
+plot(df_geo_prov, max.plot = 1)
+
+#- podemos ver que la última columna de df_geo_prov tiene las "geometrías"
+names(df_geo_prov)
+head(df_geo_prov)
+
+#- me quedo con las vv. q me interesan
+df_geo_prov <- df_geo_prov %>% select(ine_prov, ine_prov.n, ine_ccaa, ine_ccaa.n)
+names(df_geo_prov)
+
+#- podemos "agregar" geometrías
+df_geo_ccaa <- df_geo_prov %>%
+  group_by(ine_ccaa, ine_ccaa.n) %>% summarize() %>% ungroup()
+plot(df_geo_ccaa, max.plot = 1)
+names(df_geo_ccaa)
+
+
+#- junto geometría (df_geo_ccaa) con datos INE (df_viv_tur_2024)
+#- las geometrías a la izquierda
+df_ok1 <- left_join(df_geo_ccaa, df_viv_tur_2024, by = c("ine_ccaa.n" = "ccaa"))
+names(df_ok1)
+
+#- basic plot
+p1 <- ggplot() +
+  geom_sf(data = df_ok1,
+          aes(geometry = geometry, fill = viviendas_turisticas),
+          color = "white", size = 0.09)
+
+p1 + scale_fill_distiller(palette = 2)
+p1 + pjpv.curso.R.2022::theme_pjp_maps()
+p1 + scale_fill_viridis_c(option = "plasma") 
+
+
+#- mejoramos un poco el plot ---------------------------------------------------
+#- para ello calculo centroides
+library(sf)
+df_geo_ccaa <- cbind(df_geo_ccaa, st_coordinates(st_centroid(df_geo_ccaa$geometry)))
+names(df_geo_ccaa)
+#- vuelvo a juntar datos EPA con geometrías (que ahora incorporan los centroides)
+df_ok1 <- left_join(df_geo_ccaa, df_viv_tur_2024, by = c("ine_ccaa.n" = "ccaa"))
+
+p1 <- ggplot() +
+  geom_sf(data = df_ok1) +
+  geom_text(data = df_ok1, aes(x = X, y = Y, label = viviendas_turisticas), #- v. continua
+            color = "black",
+            check_overlap = TRUE, size = 3)  #- fontface = "bold"
+
+p1
+
+
+p1 <- ggplot() +
+  geom_sf(data = df_ok1,
+          aes(geometry = geometry), fill = "#B0E0E6",
+          color = "black", size = 0.09) +
+  geom_text(data = df_ok1, aes(x = X, y = Y, label = viviendas_turisticas), #- v. continua
+            color = "black",
+            check_overlap = TRUE, size = 3)  #- fontface = "bold"
+
+p1
+
+#- luego ya hay que mejorarlo
+p2024 <- p1 + pjpv.curso.R.2022::theme_pjp_maps() +
+  labs(title = "Viviendas Turísticas 2024",
+       caption = "Datos provenientes del INE")
+
+p2024
+
+#- utilizamos el pkg "patchwork" para mostrar los 2 gráficos (p2020 y p2024) side-by-side
+library(patchwork)
+
+p2020 + p2024
+
+```
+
+En los presentes mapas de coropletas se ilustran los cambios en el número de viviendas turísticas en España durante el período comprendido entre 2020 y 2024. En particular, se ha puesto el foco en tres comunidades autónomas: Cataluña, la Comunitat Valenciana y la Comunidad de Madrid.
+
+De estas tres regiones, la Comunitat Valenciana destaca como la que ha experimentado el mayor incremento en el número de viviendas turísticas, con un aumento de 16548 unidades en apenas cuatro años. A continuación, se sitúa Cataluña, seguida por la Comunidad de Madrid, que ha registrado el menor crecimiento relativo dentro del grupo analizado.
+
+
+#**Extras**
+
+#**Incremento de la Población en España**
+
+#Poblacion espana
+```{r}
+library(ggplot2)
+library(gganimate)
+library(readxl)
+
+# Cargar los datos
+poblacion_espana <- read_excel("./assets/poblacion_espana.xlsx", sheet = "formateada")
+
+# Convertir columnas a numéricas
+poblacion_espana$year <- as.numeric(poblacion_espana$year)
+poblacion_espana$value <- as.numeric(poblacion_espana$value)
+
+# Crear el gráfico
+poblacion_espana_plot <- ggplot(poblacion_espana, aes(x = year, y = value, group = 1)) +
+  geom_line(color = "#2C3E50", size = 1.5, alpha = 0.8, stat = "identity") +
+  geom_point(color = "#E74C3C", size = 3, alpha = 0.9, stat = "identity") +
+  labs(
+    title = "Incremento de la Población en España",
+    subtitle = "Evolución desde {round(frame_along, 0)}",
+    x = "Año",
+    y = "Población",
+    caption = "Fuente: Instituto Nacional de Estadísticas"
+  ) +
+  theme_minimal()
+
+# Añadir animación
+anim <- poblacion_espana_plot + 
+  transition_reveal(along = year)
+
+# Guardar la animación
+anim_save("poblacion_espana.gif", animation = animate(anim, nframes = 150, fps = 15, renderer = gifski_renderer()))
+
+# Mostrar la animación
+knitr::include_graphics("poblacion_espana.gif")
+```
+
+
+
+# **Conclusión**
+El análisis realizado en este estudio refleja cómo la turistificación ha influido en el acceso a la vivienda en España, destacando los efectos en los precios inmobiliarios, la oferta de viviendas de alquiler y las dinámicas socioeconómicas urbanas. Las regiones analizadas evidencian un crecimiento desigual, con Madrid y Cataluña liderando en términos de valores inmobiliarios más altos y variabilidad, mientras que la Comunitat Valenciana muestra un comportamiento más moderado.
+
+Además, la conversión de viviendas a usos turísticos ha contribuido a un incremento notable en el número de alojamientos turísticos, especialmente en la Comunitat Valenciana. Este fenómeno, combinado con la evolución de los salarios, pone de manifiesto las dificultades crecientes para los residentes permanentes en acceder a una vivienda adecuada.
+
+Los resultados obtenidos subrayan la necesidad de equilibrar el crecimiento del turismo con políticas que protejan el acceso a la vivienda, como regulaciones para limitar el número de viviendas turísticas, incentivos para el alquiler a largo plazo y medidas que fortalezcan el poder adquisitivo de los ciudadanos. De esta manera, se puede mitigar el impacto de la turistificación en el mercado inmobiliario y garantizar un desarrollo urbano sostenible.
+
+
+
+```{r}
+#| echo: false
+sessioninfo::session_info() %>% 
+  details::details(summary = 'current session info') 
+```
+
+
+
